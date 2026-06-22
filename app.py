@@ -1,74 +1,77 @@
-﻿import streamlit as st
+import streamlit as st
 from google import genai
 from PIL import Image
 import io
 
 # Konfiguracja PWA i wyglądu
-st.set_page_config(page_title="Wakacyjny Odkrywca", page_icon="🤠", layout="centered")
+st.set_page_config(page_title="A co to?", page_icon="👁️‍🗨️", layout="centered")
 
-st.title("🤠 Wakacyjny Odkrywca AI")
-st.write("Zrób zdjęcie czegokolwiek (robaka, skały, budynku), a AI zdradzi Ci jego tajemnice!")
+st.title("👁️‍🗨️ A co to?")
+st.write("Zrób zdjęcie robaka, kamienia, budynku lub czegokolwiek, co Cię zaciekawiło, a AI odpowie na Twoje pytanie!")
 
-# Klucz API w sidebarze (dla bezpieczeństwa)
+# Klucz API w sidebarze
 with st.sidebar:
     st.header("⚙️ Ustawienia")
     api_key = st.text_input("Wprowadź Google Gemini API Key:", type="password")
     st.markdown("[Pobierz darmowy klucz stąd](https://aistudio.google.com/)")
 
-# Wybór trybu - to nas wyróżnia!
+# Wybór trybu
 mode = st.radio(
     "Kto pyta?",
-    ["👶 Tryb Młodego Odkrywcy (Prosty język, ciekawostki)", "🧐 Tryb Naukowy dla Rodziców (Konkrety, fakty)"]
+    ["👶 Tryb Młodego Odkrywcy (Dla dzieci)", "🧐 Tryb Naukowy (Dla rodziców)"]
 )
 
-# Aparat / Galeria
-img_file = st.camera_input("📸 Zrób zdjęcie znaleziska")
+# Aparat i lokalizacja
+img_file = st.camera_input("📸 Skieruj oko lupy na obiekt")
 if not img_file:
-    img_file = st.file_uploader("Lub wybierz z galerii", type=["jpg", "jpeg", "png"])
+    img_file = st.file_uploader("Lub wybierz zdjęcie z galerii telefonu", type=["jpg", "jpeg", "png"])
 
-location = st.text_input("📍 Gdzie to znalazłeś? (np. Plaża w Rowach, las, stare miasto)")
+location = st.text_input("📍 Gdzie to znalazłeś/aś? (np. Las, park, plaża, miasto)")
 
-if st.button("Uruchom Skaner AI 🚀", type="primary"):
+if st.button("Zbadaj znalezisko! 🚀", type="primary"):
     if not api_key:
         st.error("Wpisz swój klucz API w panelu bocznym!")
     elif not img_file:
-        st.error("Zrób lub dodaj zdjęcie!")
+        st.error("Najpierw musisz zrobić lub dodać zdjęcie!")
     else:
-        with st.spinner("Skanowanie w toku..."):
+        with st.spinner("Oko lupy analizuje Twój skarb..."):
             try:
+                # Inicjalizacja klienta
                 client = genai.Client(api_key=api_key)
                 image_data = img_file.read()
                 image = Image.open(io.BytesIO(image_data))
                 
-                # Dynamiczny prompt w zależności od wybranego trybu
                 if "Młodego Odkrywcy" in mode:
                     prompt = f"""
-                    Jesteś zabawnym, pełnym energii Profesorem Przygoda. Rozmawiasz z dzieckiem.
+                    Jesteś zabawnym, pełnym energii Profesorem Przygoda. Rozmawiasz z dociekliwym dzieckiem, które pyta "A co to?".
                     Zidentyfikuj obiekt na zdjęciu (lokalizacja: {location}).
                     Napisz odpowiedź w prosty, fascynujący sposób. Używaj emotikonów.
                     Podziel odpowiedź na sekcje:
-                    - 🌟 CO TO ZA SKARB? (Prosta nazwa i opis)
-                    - 🤫 SUPERMOC / CIEKAWOSTKA (Coś, co zszokuje dziecko)
-                    - 🎮 ZADANIE DLA CIEBIE (Wymyśl prostą zabawę związaną z tym obiektem, np. 'Znajdź jeszcze 3 okrągłe kamienie')
+                    - 🌟 CO TO ZA SKARB? (Prosta, ciekawa nazwa)
+                    - 🤫 SUPERMOC / SEKRET (Coś niesamowitego o tym obiekcie)
+                    - 🎮 ZADANIE DLA CIEBIE (Prosta misja terenowa dla dziecka)
                     """
                 else:
                     prompt = f"""
-                    Działasz jako poważny przewodnik, biolog i architekt. Rozmawiasz z rodzicem.
+                    Działasz jako poważny przewodnik, biolog i ekspert. Rozmawiasz z rodzicem, który chce zaimponować dziecku wiedzą.
                     Zidentyfikuj obiekt na zdjęciu (lokalizacja: {location}).
                     Podziel odpowiedź na sekcje:
-                    - 📌 Nazwa polska i łacińska / architektoniczna
-                    - 🔍 Szczegóły techniczne / biologiczne
-                    - 🗺️ Kontekst lokalny (Czy to typowe dla miejsca: {location})
-                    - 💡 Warto wiedzieć (Fakty, którymi rodzic może zaimponować dziecku)
+                    - 📌 Oficjalna nazwa (polska i łacińska)
+                    - 🔍 Konkretne fakty i cechy
+                    - 🗺️ Czy to pasuje do lokalizacji: {location}?
+                    - 💡 Warto wiedzieć (Gotowa ciekawostka do opowiedzenia dziecku)
                     """
 
+                # ZMIANA NA MODEL PRO DLA WYŻSZEJ STABILNOŚCI
                 response = client.models.generate_content(
-                   model='gemini-1.5-flash',
+                    model='gemini-2.5-pro',
                     contents=[image, prompt]
                 )
                 
-                st.success("Skanowanie zakończone!")
+                st.success("Analiza zakończona!")
                 st.markdown(response.text)
                 
             except Exception as e:
-                st.error(f"Błąd: {e}")
+                # Wyświetlamy pełny, czysty błąd użytkownikowi
+                st.error("Wystąpił problem z analizą:")
+                st.code(str(e))
