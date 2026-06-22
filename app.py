@@ -64,7 +64,7 @@ if st.button("Zbadaj znalezisko! 🚀", type="primary"):
 
                 # ZMIANA NA MODEL PRO DLA WYŻSZEJ STABILNOŚCI
                 response = client.models.generate_content(
-                    model='gemini-2.5-pro',
+                    model='gemini-2.5-flash',
                     contents=[image, prompt]
                 )
                 
